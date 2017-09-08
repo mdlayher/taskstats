@@ -29,6 +29,11 @@ func newClient() (*client, error) {
 		return nil, err
 	}
 
+	return initClient(c)
+}
+
+// initClient is the internal client constructor used in some tests.
+func initClient(c *genetlink.Conn) (*client, error) {
 	f, err := c.GetFamily(unix.TASKSTATS_GENL_NAME)
 	if err != nil {
 		return nil, err
