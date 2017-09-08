@@ -3,11 +3,12 @@
 package taskstats_test
 
 import (
-	"log"
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/mdlayher/taskstats"
+	"golang.org/x/sys/unix"
 )
 
 func TestLinuxClientIntegration(t *testing.T) {
@@ -26,6 +27,13 @@ func TestLinuxClientIntegration(t *testing.T) {
 		t.Fatalf("failed to retrieve self stats: %v", err)
 	}
 
-	// TODO(mdlayher): verify fields
-	log.Println(stats)
+	if diff := cmp.Diff(unix.TASKSTATS_VERSION, int(stats.Version)); diff != "" {
+		t.Fatalf("unexpected taskstats version (-want +got):\n%s", diff)
+	}
+
+	if diff := cmp.Diff(os.Getpid(), int(stats.Ac_pid)); diff != "" {
+		t.Fatalf("unexpected PID (-want +got):\n%s", diff)
+	}
+
+	// TODO(mdlayher): verify more fields?
 }
