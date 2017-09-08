@@ -4,6 +4,7 @@
 // For more information on taskstats, please see:
 //   - https://www.kernel.org/doc/Documentation/accounting/taskstats.txt
 //   - https://www.kernel.org/doc/Documentation/accounting/taskstats-struct.txt
+//   - https://andrestc.com/post/linux-delay-accounting/
 package taskstats
 
 import (
