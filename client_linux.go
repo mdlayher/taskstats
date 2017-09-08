@@ -36,6 +36,7 @@ func newClient() (*client, error) {
 func initClient(c *genetlink.Conn) (*client, error) {
 	f, err := c.GetFamily(unix.TASKSTATS_GENL_NAME)
 	if err != nil {
+		_ = c.Close()
 		return nil, err
 	}
 
