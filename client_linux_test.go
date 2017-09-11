@@ -28,6 +28,18 @@ func TestLinuxClientPIDBadMessages(t *testing.T) {
 			name: "two messages",
 			msgs: []genetlink.Message{{}, {}},
 		},
+		{
+			name: "incorrect taskstats size",
+			msgs: []genetlink.Message{{
+				Data: mustMarshalAttributes([]netlink.Attribute{{
+					Type: unix.TASKSTATS_TYPE_AGGR_PID,
+					Data: mustMarshalAttributes([]netlink.Attribute{{
+						Type: unix.TASKSTATS_TYPE_STATS,
+						Data: []byte{0xff},
+					}}),
+				}}),
+			}},
+		},
 	}
 
 	for _, tt := range tests {

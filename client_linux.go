@@ -13,6 +13,11 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	// sizeofTaskstats is the size of a unix.Taskstats structure.
+	sizeofTaskstats = int(unsafe.Sizeof(unix.Taskstats{}))
+)
+
 var _ osClient = &client{}
 
 // A client is a Linux-specific taskstats client.
@@ -106,6 +111,13 @@ func parseMessage(m genetlink.Message) (*Stats, error) {
 			// Only parse Stats element since caller would already have PID.
 			if na.Type != unix.TASKSTATS_TYPE_STATS {
 				continue
+			}
+
+			// Verify that the byte slice containing a unix.Taskstats is the
+			// size expected by this package, so we don't blindly cast the
+			// byte slice into a structure of the wrong size.
+			if want, got := sizeofTaskstats, len(na.Data); want != got {
+				return nil, fmt.Errorf("unexpected taskstats structure size, want %d, got %d", want, got)
 			}
 
 			// TODO(mdlayher): parse raw unix.Taskstats structure into nicer structure.
