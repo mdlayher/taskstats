@@ -112,7 +112,7 @@ func TestLinuxClientPIDOK(t *testing.T) {
 
 	fn := func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
 		// Cast unix.Taskstats structure into a byte array with the correct size.
-		b := *(*[unsafe.Sizeof(stats)]byte)(unsafe.Pointer(&stats))
+		b := *(*[sizeofTaskstats]byte)(unsafe.Pointer(&stats))
 
 		return []genetlink.Message{{
 			Data: mustMarshalAttributes([]netlink.Attribute{{
