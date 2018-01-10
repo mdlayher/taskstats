@@ -2,9 +2,10 @@ taskstats [![Build Status](https://travis-ci.org/mdlayher/taskstats.svg?branch=m
 =========
 
 Package `taskstats` provides access to Linux's taskstats interface, for sending
-per-task and per-process statistics from the kernel to userspace.
+per-task, per-process, and cgroup statistics from the kernel to userspace.
 
 For more information on taskstats, please see:
+  - https://www.kernel.org/doc/Documentation/accounting/cgroupstats.txt
   - https://www.kernel.org/doc/Documentation/accounting/taskstats.txt
   - https://www.kernel.org/doc/Documentation/accounting/taskstats-struct.txt
   - https://andrestc.com/post/linux-delay-accounting/
