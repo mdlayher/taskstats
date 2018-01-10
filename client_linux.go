@@ -15,7 +15,8 @@ import (
 
 const (
 	// sizeofTaskstats is the size of a unix.Taskstats structure.
-	sizeofTaskstats = int(unsafe.Sizeof(unix.Taskstats{}))
+	sizeofTaskstats   = int(unsafe.Sizeof(unix.Taskstats{}))
+	sizeofCGroupStats = int(unsafe.Sizeof(unix.CGroupStats{}))
 )
 
 var _ osClient = &client{}
@@ -87,6 +88,74 @@ func (c *client) PID(pid int) (*Stats, error) {
 	}
 
 	return parseMessage(msgs[0])
+}
+
+// CGroupStats implements osClient.
+func (c *client) CGroupStats(path string) (*CGroupStats, error) {
+	// Open cgroup path so its file descriptor can be passed to taskstats.
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	// Query taskstats for cgroup information using the file descriptor.
+	attrb, err := netlink.MarshalAttributes([]netlink.Attribute{{
+		Type: unix.CGROUPSTATS_CMD_ATTR_FD,
+		Data: nlenc.Uint32Bytes(uint32(f.Fd())),
+	}})
+	if err != nil {
+		return nil, err
+	}
+
+	msg := genetlink.Message{
+		Header: genetlink.Header{
+			Command: unix.CGROUPSTATS_CMD_GET,
+			Version: unix.TASKSTATS_VERSION,
+		},
+		Data: attrb,
+	}
+
+	flags := netlink.HeaderFlagsRequest
+
+	msgs, err := c.c.Execute(msg, c.family.ID, flags)
+	if err != nil {
+		return nil, err
+	}
+
+	if l := len(msgs); l != 1 {
+		return nil, fmt.Errorf("unexpected number of cgroupstats messages: %d", l)
+	}
+
+	return parseCGroupMessage(msgs[0])
+}
+
+// parseCGroupMessage attempts to parse a CGroupStats structure from a generic netlink message.
+func parseCGroupMessage(m genetlink.Message) (*CGroupStats, error) {
+	attrs, err := netlink.UnmarshalAttributes(m.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, a := range attrs {
+		// Only parse cgroupstats structure.
+		if a.Type != unix.CGROUPSTATS_TYPE_CGROUP_STATS {
+			continue
+		}
+
+		// Verify that the byte slice containing a unix.CGroupStats is the
+		// size expected by this package, so we don't blindly cast the
+		// byte slice into a structure of the wrong size.
+		if want, got := sizeofCGroupStats, len(a.Data); want != got {
+			return nil, fmt.Errorf("unexpected cgroupstats structure size, want %d, got %d", want, got)
+		}
+
+		cs := *(*unix.CGroupStats)(unsafe.Pointer(&a.Data[0]))
+		return parseCGroupStats(cs)
+	}
+
+	// No taskstats response found.
+	return nil, os.ErrNotExist
 }
 
 // parseMessage attempts to parse a Stats structure from a generic netlink message.

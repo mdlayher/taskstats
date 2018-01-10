@@ -1,7 +1,8 @@
 // Package taskstats provides access to Linux's taskstats interface, for sending
-// per-task and per-process statistics from the kernel to userspace.
+// per-task, per-process, and cgroup statistics from the kernel to userspace.
 //
 // For more information on taskstats, please see:
+//   - https://www.kernel.org/doc/Documentation/accounting/cgroupstats.txt
 //   - https://www.kernel.org/doc/Documentation/accounting/taskstats.txt
 //   - https://www.kernel.org/doc/Documentation/accounting/taskstats-struct.txt
 //   - https://andrestc.com/post/linux-delay-accounting/
@@ -30,6 +31,11 @@ func New() (*Client, error) {
 	}, nil
 }
 
+// CGroupStats retrieves cgroup statistics for the cgroup specified by path.
+func (c *Client) CGroupStats(path string) (*CGroupStats, error) {
+	return c.c.CGroupStats(path)
+}
+
 // Self is a convenience method for retrieving statistics about the current
 // process.
 func (c *Client) Self() (*Stats, error) {
@@ -49,5 +55,6 @@ func (c *Client) Close() error {
 // An osClient is the operating system-specific implementation of Client.
 type osClient interface {
 	io.Closer
+	CGroupStats(path string) (*CGroupStats, error)
 	PID(pid int) (*Stats, error)
 }

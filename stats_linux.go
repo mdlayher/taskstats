@@ -6,20 +6,24 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// TODO(mdlayher+andrestc): remove this Stats type when stats is exported.
+
 // Stats is the structure returned by Linux's taskstats interface.
 type Stats unix.Taskstats
 
-// TODO(mdlayher): export cleaned up Stats type.
-type stats struct {
-	BeginTime       time.Time
-	ElapsedTime     time.Duration
-	UserCPUTime     time.Duration
-	SystemCPUTime   time.Duration
-	MinorPageFaults uint64
-	MajorPageFaults uint64
+// parseCGroupStats parses a raw cgroupstats structure into a cleaner form.
+func parseCGroupStats(cs unix.CGroupStats) (*CGroupStats, error) {
+	// This conversion isn't really necessary for this type, but it allows us
+	// to export a structure that isn't defined in a platform-specific way.
+	stats := &CGroupStats{
+		Sleeping:        cs.Sleeping,
+		Running:         cs.Running,
+		Stopped:         cs.Stopped,
+		Uninterruptible: cs.Uninterruptible,
+		IOWait:          cs.Io_wait,
+	}
 
-	CPUCount uint64
-	CPUDelay time.Duration
+	return stats, nil
 }
 
 // parseStats parses a raw taskstats structure into a cleaner form.

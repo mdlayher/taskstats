@@ -32,6 +32,11 @@ func (c *client) Close() error {
 	return errUnimplemented
 }
 
+// CGroupStats implements osClient.
+func (c *client) CGroupStats(path string) (*CGroupStats, error) {
+	return nil, errUnimplemented
+}
+
 // PID implements osClient.
 func (c *client) PID(pid int) (*Stats, error) {
 	return nil, errUnimplemented
