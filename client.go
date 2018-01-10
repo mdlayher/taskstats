@@ -13,8 +13,9 @@ import (
 	"os"
 )
 
-// A Client provides access to Linux taskstats information.  Client operations
-// require elevated privileges.
+// A Client provides access to Linux taskstats information.
+//
+// Some Client operations require elevated privileges.
 type Client struct {
 	c osClient
 }
