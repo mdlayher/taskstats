@@ -32,6 +32,10 @@ func New() (*Client, error) {
 }
 
 // CGroupStats retrieves cgroup statistics for the cgroup specified by path.
+// Path should be a CPU cgroup path found in sysfs, such as:
+//  - /sys/fs/cgroup/cpu
+//  - /sys/fs/cgroup/cpu/docker
+//  - /sys/fs/cgroup/cpu/docker/(hexadecimal identifier)
 func (c *Client) CGroupStats(path string) (*CGroupStats, error) {
 	return c.c.CGroupStats(path)
 }
