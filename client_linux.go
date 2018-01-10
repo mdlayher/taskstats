@@ -189,9 +189,7 @@ func parseMessage(m genetlink.Message) (*Stats, error) {
 				return nil, fmt.Errorf("unexpected taskstats structure size, want %d, got %d", want, got)
 			}
 
-			// TODO(mdlayher): parse raw unix.Taskstats structure into nicer structure.
-			stats := Stats(*(*unix.Taskstats)(unsafe.Pointer(&na.Data[0])))
-			return &stats, nil
+			return parseStats(*(*unix.Taskstats)(unsafe.Pointer(&na.Data[0])))
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
@@ -263,8 +264,22 @@ func TestLinuxClientPIDOK(t *testing.T) {
 	pid := os.Getpid()
 
 	stats := unix.Taskstats{
-		Version: unix.TASKSTATS_VERSION,
-		Ac_pid:  uint32(pid),
+		Version:               unix.TASKSTATS_VERSION,
+		Ac_pid:                uint32(pid),
+		Ac_etime:              0,
+		Ac_utime:              1,
+		Ac_stime:              2,
+		Ac_btime:              3,
+		Ac_minflt:             4,
+		Ac_majflt:             5,
+		Cpu_count:             6,
+		Cpu_delay_total:       7,
+		Blkio_count:           8,
+		Blkio_delay_total:     9,
+		Swapin_count:          10,
+		Swapin_delay_total:    11,
+		Freepages_count:       12,
+		Freepages_delay_total: 13,
 	}
 
 	fn := func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
@@ -290,7 +305,22 @@ func TestLinuxClientPIDOK(t *testing.T) {
 		t.Fatalf("failed to get stats: %v", err)
 	}
 
-	tstats := Stats(stats)
+	tstats := Stats{
+		ElapsedTime:         time.Duration(0),
+		UserCPUTime:         time.Microsecond * 1,
+		SystemCPUTime:       time.Microsecond * 2,
+		BeginTime:           time.Unix(3, 0),
+		MinorPageFaults:     4,
+		MajorPageFaults:     5,
+		CPUDelayCount:       6,
+		CPUDelay:            time.Nanosecond * 7,
+		BlockIODelayCount:   8,
+		BlockIODelay:        time.Nanosecond * 9,
+		SwapInDelayCount:    10,
+		SwapInDelay:         time.Nanosecond * 11,
+		FreePagesDelayCount: 12,
+		FreePagesDelay:      time.Nanosecond * 13,
+	}
 
 	if diff := cmp.Diff(&tstats, newStats); diff != "" {
 		t.Fatalf("unexpected taskstats structure (-want +got):\n%s", diff)
