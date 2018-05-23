@@ -14,9 +14,6 @@ var (
 		runtime.GOOS, runtime.GOARCH)
 )
 
-// Stats is not implemented on this platform.
-type Stats struct{}
-
 var _ osClient = &client{}
 
 // A client is an unimplemented taskstats client.

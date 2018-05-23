@@ -6,11 +6,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// TODO(mdlayher+andrestc): remove this Stats type when stats is exported.
-
-// Stats is the structure returned by Linux's taskstats interface.
-type Stats unix.Taskstats
-
 // parseCGroupStats parses a raw cgroupstats structure into a cleaner form.
 func parseCGroupStats(cs unix.CGroupStats) (*CGroupStats, error) {
 	// This conversion isn't really necessary for this type, but it allows us
@@ -27,17 +22,22 @@ func parseCGroupStats(cs unix.CGroupStats) (*CGroupStats, error) {
 }
 
 // parseStats parses a raw taskstats structure into a cleaner form.
-func parseStats(ts unix.Taskstats) (*stats, error) {
-	stats := &stats{
-		BeginTime:       time.Unix(int64(ts.Ac_btime), 0),
-		ElapsedTime:     microseconds(ts.Ac_etime),
-		UserCPUTime:     microseconds(ts.Ac_utime),
-		SystemCPUTime:   microseconds(ts.Ac_stime),
-		MinorPageFaults: ts.Ac_minflt,
-		MajorPageFaults: ts.Ac_majflt,
-
-		CPUCount: ts.Cpu_count,
-		CPUDelay: nanoseconds(ts.Cpu_delay_total),
+func parseStats(ts unix.Taskstats) (*Stats, error) {
+	stats := &Stats{
+		BeginTime:           time.Unix(int64(ts.Ac_btime), 0),
+		ElapsedTime:         microseconds(ts.Ac_etime),
+		UserCPUTime:         microseconds(ts.Ac_utime),
+		SystemCPUTime:       microseconds(ts.Ac_stime),
+		MinorPageFaults:     ts.Ac_minflt,
+		MajorPageFaults:     ts.Ac_majflt,
+		CPUDelayCount:       ts.Cpu_count,
+		CPUDelay:            nanoseconds(ts.Cpu_delay_total),
+		BlockIODelayCount:   ts.Blkio_count,
+		BlockIODelay:        nanoseconds(ts.Blkio_delay_total),
+		SwapInDelayCount:    ts.Swapin_count,
+		SwapInDelay:         nanoseconds(ts.Swapin_delay_total),
+		FreePagesDelayCount: ts.Freepages_count,
+		FreePagesDelay:      nanoseconds(ts.Freepages_delay_total),
 	}
 
 	return stats, nil
