@@ -10,6 +10,7 @@ import (
 	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/mdlayher/genetlink"
 	"github.com/mdlayher/genetlink/genltest"
 	"github.com/mdlayher/netlink"
@@ -292,7 +293,11 @@ func TestLinuxClientPIDOK(t *testing.T) {
 
 	tstats := Stats(stats)
 
-	if diff := cmp.Diff(&tstats, newStats); diff != "" {
+	opts := []cmp.Option{
+		cmpopts.IgnoreUnexported(tstats),
+	}
+
+	if diff := cmp.Diff(&tstats, newStats, opts...); diff != "" {
 		t.Fatalf("unexpected taskstats structure (-want +got):\n%s", diff)
 	}
 }
