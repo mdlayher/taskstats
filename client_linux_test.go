@@ -15,6 +15,7 @@ import (
 	"github.com/mdlayher/genetlink"
 	"github.com/mdlayher/genetlink/genltest"
 	"github.com/mdlayher/netlink"
+	"github.com/mdlayher/netlink/nltest"
 	"golang.org/x/sys/unix"
 )
 
@@ -37,7 +38,7 @@ func TestLinuxClientCGroupStatsBadMessages(t *testing.T) {
 		{
 			name: "incorrect cgroupstats size",
 			msgs: []genetlink.Message{{
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.CGROUPSTATS_TYPE_CGROUP_STATS,
 					Data: []byte{0xff},
 				}}),
@@ -77,7 +78,7 @@ func TestLinuxClientCGroupStatsIsNotExist(t *testing.T) {
 		{
 			name: "no aggr+pid",
 			msg: genetlink.Message{
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.TASKSTATS_TYPE_NULL,
 				}}),
 			},
@@ -86,7 +87,7 @@ func TestLinuxClientCGroupStatsIsNotExist(t *testing.T) {
 		{
 			name: "no stats",
 			msg: genetlink.Message{
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					// Wrong type for cgroup stats.
 					Type: unix.TASKSTATS_TYPE_AGGR_PID,
 				}}),
@@ -149,7 +150,7 @@ func TestLinuxClientCGroupStatsOK(t *testing.T) {
 		b := *(*[sizeofCGroupStats]byte)(unsafe.Pointer(&stats))
 
 		return []genetlink.Message{{
-			Data: mustMarshalAttributes([]netlink.Attribute{{
+			Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 				Type: unix.CGROUPSTATS_TYPE_CGROUP_STATS,
 				Data: b[:],
 			}}),
@@ -190,9 +191,9 @@ func TestLinuxClientPIDBadMessages(t *testing.T) {
 		{
 			name: "incorrect taskstats size",
 			msgs: []genetlink.Message{{
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.TASKSTATS_TYPE_AGGR_PID,
-					Data: mustMarshalAttributes([]netlink.Attribute{{
+					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 						Type: unix.TASKSTATS_TYPE_STATS,
 						Data: []byte{0xff},
 					}}),
@@ -228,7 +229,7 @@ func TestLinuxClientPIDIsNotExist(t *testing.T) {
 		{
 			name: "no aggr+pid",
 			msg: genetlink.Message{
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.TASKSTATS_TYPE_NULL,
 				}}),
 			},
@@ -236,9 +237,9 @@ func TestLinuxClientPIDIsNotExist(t *testing.T) {
 		{
 			name: "no stats",
 			msg: genetlink.Message{
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.TASKSTATS_TYPE_AGGR_PID,
-					Data: mustMarshalAttributes([]netlink.Attribute{{
+					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 						Type: unix.TASKSTATS_TYPE_NULL,
 					}}),
 				}}),
@@ -288,9 +289,9 @@ func TestLinuxClientPIDOK(t *testing.T) {
 		b := *(*[sizeofTaskstats]byte)(unsafe.Pointer(&stats))
 
 		return []genetlink.Message{{
-			Data: mustMarshalAttributes([]netlink.Attribute{{
+			Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 				Type: unix.TASKSTATS_TYPE_AGGR_PID,
-				Data: mustMarshalAttributes([]netlink.Attribute{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.TASKSTATS_TYPE_STATS,
 					Data: b[:],
 				}}),
@@ -375,13 +376,4 @@ func tempFile(t *testing.T) (string, func()) {
 			t.Fatalf("failed to remove temporary file: %v", err)
 		}
 	}
-}
-
-func mustMarshalAttributes(attrs []netlink.Attribute) []byte {
-	b, err := netlink.MarshalAttributes(attrs)
-	if err != nil {
-		panic(fmt.Sprintf("failed to marshal attributes: %v", err))
-	}
-
-	return b
 }
