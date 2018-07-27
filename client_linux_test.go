@@ -3,7 +3,6 @@
 package taskstats
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -157,7 +156,12 @@ func TestLinuxClientCGroupStatsOK(t *testing.T) {
 		}}, nil
 	}
 
-	c := testClient(t, checkRequest(unix.CGROUPSTATS_CMD_GET, netlink.HeaderFlagsRequest, fn))
+	c := testClient(t, genltest.CheckRequest(
+		familyID,
+		unix.CGROUPSTATS_CMD_GET,
+		netlink.HeaderFlagsRequest,
+		fn,
+	))
 	defer c.Close()
 
 	newStats, err := c.CGroupStats(f)
@@ -299,7 +303,12 @@ func TestLinuxClientPIDOK(t *testing.T) {
 		}}, nil
 	}
 
-	c := testClient(t, checkRequest(unix.TASKSTATS_CMD_GET, netlink.HeaderFlagsRequest, fn))
+	c := testClient(t, genltest.CheckRequest(
+		familyID,
+		unix.TASKSTATS_CMD_GET,
+		netlink.HeaderFlagsRequest,
+		fn,
+	))
 	defer c.Close()
 
 	newStats, err := c.PID(pid)
@@ -333,23 +342,11 @@ func TestLinuxClientPIDOK(t *testing.T) {
 	}
 }
 
-func checkRequest(command uint8, flags netlink.HeaderFlags, fn genltest.Func) genltest.Func {
-	return func(greq genetlink.Message, nreq netlink.Message) ([]genetlink.Message, error) {
-		if want, got := command, greq.Header.Command; command != 0 && want != got {
-			return nil, fmt.Errorf("unexpected generic netlink header command: %d, want: %d", got, want)
-		}
-
-		if want, got := flags, nreq.Header.Flags; flags != 0 && want != got {
-			return nil, fmt.Errorf("unexpected generic netlink header command: %s, want: %s", got, want)
-		}
-
-		return fn(greq, nreq)
-	}
-}
+const familyID = 20
 
 func testClient(t *testing.T, fn genltest.Func) *client {
 	family := genetlink.Family{
-		ID:      20,
+		ID:      familyID,
 		Version: unix.TASKSTATS_GENL_VERSION,
 		Name:    unix.TASKSTATS_GENL_NAME,
 	}
