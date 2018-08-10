@@ -61,7 +61,7 @@ func (c *client) Close() error {
 func (c *client) PID(pid int) (*Stats, error) {
 	// Query taskstats for information using a specific PID.
 	attrb, err := netlink.MarshalAttributes([]netlink.Attribute{{
-		Type: unix.TASKSTATS_CMD_ATTR_PID,
+		Type: unix.TASKSTATS_CMD_ATTR_TGID,
 		Data: nlenc.Uint32Bytes(uint32(pid)),
 	}})
 	if err != nil {
@@ -167,7 +167,7 @@ func parseMessage(m genetlink.Message) (*Stats, error) {
 
 	for _, a := range attrs {
 		// Only parse PID+stats structure.
-		if a.Type != unix.TASKSTATS_TYPE_AGGR_PID {
+		if a.Type != unix.TASKSTATS_TYPE_AGGR_TGID {
 			continue
 		}
 
