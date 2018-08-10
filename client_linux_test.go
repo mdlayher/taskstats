@@ -88,7 +88,7 @@ func TestLinuxClientCGroupStatsIsNotExist(t *testing.T) {
 			msg: genetlink.Message{
 				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					// Wrong type for cgroup stats.
-					Type: unix.TASKSTATS_TYPE_AGGR_PID,
+					Type: unix.TASKSTATS_TYPE_AGGR_TGID,
 				}}),
 			},
 			createFile: true,
@@ -196,7 +196,7 @@ func TestLinuxClientPIDBadMessages(t *testing.T) {
 			name: "incorrect taskstats size",
 			msgs: []genetlink.Message{{
 				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-					Type: unix.TASKSTATS_TYPE_AGGR_PID,
+					Type: unix.TASKSTATS_TYPE_AGGR_TGID,
 					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 						Type: unix.TASKSTATS_TYPE_STATS,
 						Data: []byte{0xff},
@@ -242,7 +242,7 @@ func TestLinuxClientPIDIsNotExist(t *testing.T) {
 			name: "no stats",
 			msg: genetlink.Message{
 				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-					Type: unix.TASKSTATS_TYPE_AGGR_PID,
+					Type: unix.TASKSTATS_TYPE_AGGR_TGID,
 					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 						Type: unix.TASKSTATS_TYPE_NULL,
 					}}),
@@ -294,7 +294,7 @@ func TestLinuxClientPIDOK(t *testing.T) {
 
 		return []genetlink.Message{{
 			Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-				Type: unix.TASKSTATS_TYPE_AGGR_PID,
+				Type: unix.TASKSTATS_TYPE_AGGR_TGID,
 				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
 					Type: unix.TASKSTATS_TYPE_STATS,
 					Data: b[:],
