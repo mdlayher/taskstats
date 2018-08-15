@@ -59,10 +59,19 @@ func (c *client) Close() error {
 
 // PID implements osClient.
 func (c *client) PID(pid int) (*Stats, error) {
-	// Query taskstats for information using a specific PID.
+	return c.getStats(pid, unix.TASKSTATS_CMD_ATTR_PID, unix.TASKSTATS_TYPE_AGGR_PID)
+}
+
+// TGID implements osClient.
+func (c *client) TGID(tgid int) (*Stats, error) {
+	return c.getStats(tgid, unix.TASKSTATS_CMD_ATTR_TGID, unix.TASKSTATS_TYPE_AGGR_TGID)
+}
+
+func (c *client) getStats(id int, cmdAttr, typeAggr uint16) (*Stats, error) {
+	// Query taskstats for information using a specific ID.
 	attrb, err := netlink.MarshalAttributes([]netlink.Attribute{{
-		Type: unix.TASKSTATS_CMD_ATTR_PID,
-		Data: nlenc.Uint32Bytes(uint32(pid)),
+		Type: cmdAttr,
+		Data: nlenc.Uint32Bytes(uint32(id)),
 	}})
 	if err != nil {
 		return nil, err
@@ -87,7 +96,7 @@ func (c *client) PID(pid int) (*Stats, error) {
 		return nil, fmt.Errorf("unexpected number of taskstats messages: %d", l)
 	}
 
-	return parseMessage(msgs[0])
+	return parseMessage(msgs[0], typeAggr)
 }
 
 // CGroupStats implements osClient.
@@ -159,15 +168,15 @@ func parseCGroupMessage(m genetlink.Message) (*CGroupStats, error) {
 }
 
 // parseMessage attempts to parse a Stats structure from a generic netlink message.
-func parseMessage(m genetlink.Message) (*Stats, error) {
+func parseMessage(m genetlink.Message, typeAggr uint16) (*Stats, error) {
 	attrs, err := netlink.UnmarshalAttributes(m.Data)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, a := range attrs {
-		// Only parse PID+stats structure.
-		if a.Type != unix.TASKSTATS_TYPE_AGGR_PID {
+		// Only parse ID+stats structure.
+		if a.Type != typeAggr {
 			continue
 		}
 
@@ -177,7 +186,7 @@ func parseMessage(m genetlink.Message) (*Stats, error) {
 		}
 
 		for _, na := range nattrs {
-			// Only parse Stats element since caller would already have PID.
+			// Only parse Stats element since caller would already have ID.
 			if na.Type != unix.TASKSTATS_TYPE_STATS {
 				continue
 			}

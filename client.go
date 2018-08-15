@@ -44,12 +44,17 @@ func (c *Client) CGroupStats(path string) (*CGroupStats, error) {
 // Self is a convenience method for retrieving statistics about the current
 // process.
 func (c *Client) Self() (*Stats, error) {
-	return c.c.PID(os.Getpid())
+	return c.c.TGID(os.Getpid())
 }
 
 // PID retrieves statistics about a process, identified by its PID.
 func (c *Client) PID(pid int) (*Stats, error) {
 	return c.c.PID(pid)
+}
+
+// TGID retrieves statistics about a thread group, identified by its TGID.
+func (c *Client) TGID(tgid int) (*Stats, error) {
+	return c.c.TGID(tgid)
 }
 
 // Close releases resources used by a Client.
@@ -62,4 +67,5 @@ type osClient interface {
 	io.Closer
 	CGroupStats(path string) (*CGroupStats, error)
 	PID(pid int) (*Stats, error)
+	TGID(tgid int) (*Stats, error)
 }

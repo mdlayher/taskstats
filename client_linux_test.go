@@ -221,6 +221,48 @@ func TestLinuxClientPIDBadMessages(t *testing.T) {
 	}
 }
 
+func TestLinuxClientTGIDBadMessages(t *testing.T) {
+	tests := []struct {
+		name string
+		msgs []genetlink.Message
+	}{
+		{
+			name: "no messages",
+			msgs: []genetlink.Message{},
+		},
+		{
+			name: "two messages",
+			msgs: []genetlink.Message{{}, {}},
+		},
+		{
+			name: "incorrect taskstats size",
+			msgs: []genetlink.Message{{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+					Type: unix.TASKSTATS_TYPE_AGGR_TGID,
+					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+						Type: unix.TASKSTATS_TYPE_STATS,
+						Data: []byte{0xff},
+					}}),
+				}}),
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := testClient(t, func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
+				return tt.msgs, nil
+			})
+			defer c.Close()
+
+			_, err := c.TGID(1)
+			if err == nil {
+				t.Fatal("an error was expected, but none occurred")
+			}
+		})
+	}
+}
+
 func TestLinuxClientPIDIsNotExist(t *testing.T) {
 	tests := []struct {
 		name string
@@ -259,6 +301,51 @@ func TestLinuxClientPIDIsNotExist(t *testing.T) {
 			defer c.Close()
 
 			_, err := c.PID(1)
+			if !os.IsNotExist(err) {
+				t.Fatalf("expected is not exist, but got: %v", err)
+			}
+		})
+	}
+}
+
+func TestLinuxClientTGIDIsNotExist(t *testing.T) {
+	tests := []struct {
+		name string
+		msg  genetlink.Message
+	}{
+		{
+			name: "no attributes",
+			msg:  genetlink.Message{},
+		},
+		{
+			name: "no aggr+tgid",
+			msg: genetlink.Message{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+					Type: unix.TASKSTATS_TYPE_NULL,
+				}}),
+			},
+		},
+		{
+			name: "no stats",
+			msg: genetlink.Message{
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+					Type: unix.TASKSTATS_TYPE_AGGR_TGID,
+					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+						Type: unix.TASKSTATS_TYPE_NULL,
+					}}),
+				}}),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := testClient(t, func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
+				return []genetlink.Message{tt.msg}, nil
+			})
+			defer c.Close()
+
+			_, err := c.TGID(1)
 			if !os.IsNotExist(err) {
 				t.Fatalf("expected is not exist, but got: %v", err)
 			}
@@ -312,6 +399,82 @@ func TestLinuxClientPIDOK(t *testing.T) {
 	defer c.Close()
 
 	newStats, err := c.PID(pid)
+	if err != nil {
+		t.Fatalf("failed to get stats: %v", err)
+	}
+
+	tstats := Stats{
+		ElapsedTime:         time.Duration(0),
+		UserCPUTime:         time.Microsecond * 1,
+		SystemCPUTime:       time.Microsecond * 2,
+		BeginTime:           time.Unix(3, 0),
+		MinorPageFaults:     4,
+		MajorPageFaults:     5,
+		CPUDelayCount:       6,
+		CPUDelay:            time.Nanosecond * 7,
+		BlockIODelayCount:   8,
+		BlockIODelay:        time.Nanosecond * 9,
+		SwapInDelayCount:    10,
+		SwapInDelay:         time.Nanosecond * 11,
+		FreePagesDelayCount: 12,
+		FreePagesDelay:      time.Nanosecond * 13,
+	}
+
+	opts := []cmp.Option{
+		cmpopts.IgnoreUnexported(tstats),
+	}
+
+	if diff := cmp.Diff(&tstats, newStats, opts...); diff != "" {
+		t.Fatalf("unexpected taskstats structure (-want +got):\n%s", diff)
+	}
+}
+
+func TestLinuxClientTGIDOK(t *testing.T) {
+	tgid := os.Getpid()
+
+	stats := unix.Taskstats{
+		Version:               unix.TASKSTATS_VERSION,
+		Ac_pid:                uint32(tgid),
+		Ac_etime:              0,
+		Ac_utime:              1,
+		Ac_stime:              2,
+		Ac_btime:              3,
+		Ac_minflt:             4,
+		Ac_majflt:             5,
+		Cpu_count:             6,
+		Cpu_delay_total:       7,
+		Blkio_count:           8,
+		Blkio_delay_total:     9,
+		Swapin_count:          10,
+		Swapin_delay_total:    11,
+		Freepages_count:       12,
+		Freepages_delay_total: 13,
+	}
+
+	fn := func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
+		// Cast unix.Taskstats structure into a byte array with the correct size.
+		b := *(*[sizeofTaskstats]byte)(unsafe.Pointer(&stats))
+
+		return []genetlink.Message{{
+			Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+				Type: unix.TASKSTATS_TYPE_AGGR_TGID,
+				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
+					Type: unix.TASKSTATS_TYPE_STATS,
+					Data: b[:],
+				}}),
+			}}),
+		}}, nil
+	}
+
+	c := testClient(t, genltest.CheckRequest(
+		familyID,
+		unix.TASKSTATS_CMD_GET,
+		netlink.HeaderFlagsRequest,
+		fn,
+	))
+	defer c.Close()
+
+	newStats, err := c.TGID(tgid)
 	if err != nil {
 		t.Fatalf("failed to get stats: %v", err)
 	}
