@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	// sizeofTaskstats is the size of a unix.Taskstats structure.
-	sizeofTaskstats   = int(unsafe.Sizeof(unix.Taskstats{}))
+	// sizeofTaskstatsV8 is the size of a unix.Taskstats structure as of
+	// taskstats version 8.
+	sizeofTaskstatsV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
 	sizeofCGroupStats = int(unsafe.Sizeof(unix.CGroupStats{}))
 )
 
@@ -194,7 +195,7 @@ func parseMessage(m genetlink.Message, typeAggr uint16) (*Stats, error) {
 			// Verify that the byte slice containing a unix.Taskstats is the
 			// size expected by this package, so we don't blindly cast the
 			// byte slice into a structure of the wrong size.
-			if want, got := sizeofTaskstats, len(na.Data); want != got {
+			if want, got := sizeofTaskstatsV8, len(na.Data); want != got {
 				return nil, fmt.Errorf("unexpected taskstats structure size, want %d, got %d", want, got)
 			}
 
