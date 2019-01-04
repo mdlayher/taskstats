@@ -17,6 +17,9 @@ const (
 	// sizeofTaskstatsV8 is the size of a unix.Taskstats structure as of
 	// taskstats version 8.
 	sizeofTaskstatsV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
+	// sizeofTaskstatsV9 is the size of a unix.Taskstats structure as of
+	// taskstats version 9.
+	sizeofTaskstatsV9 = int(unsafe.Sizeof(unix.Taskstats{}))
 	sizeofCGroupStats = int(unsafe.Sizeof(unix.CGroupStats{}))
 )
 
@@ -195,8 +198,8 @@ func parseMessage(m genetlink.Message, typeAggr uint16) (*Stats, error) {
 			// Verify that the byte slice containing a unix.Taskstats is the
 			// size expected by this package, so we don't blindly cast the
 			// byte slice into a structure of the wrong size.
-			if want, got := sizeofTaskstatsV8, len(na.Data); want != got {
-				return nil, fmt.Errorf("unexpected taskstats structure size, want %d, got %d", want, got)
+			if wantV8, wantV9, got := sizeofTaskstatsV8, sizeofTaskstatsV9, len(na.Data); wantV8 != got && wantV9 != got {
+				return nil, fmt.Errorf("unexpected taskstats structure size, want %d (v8) or %d (v9), got %d", wantV8, wantV9, got)
 			}
 
 			return parseStats(*(*unix.Taskstats)(unsafe.Pointer(&na.Data[0])))
