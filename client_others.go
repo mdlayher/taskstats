@@ -38,3 +38,8 @@ func (c *client) CGroupStats(path string) (*CGroupStats, error) {
 func (c *client) PID(pid int) (*Stats, error) {
 	return nil, errUnimplemented
 }
+
+// TGID implements osClient.
+func (c *client) TGID(tgid int) (*Stats, error) {
+	return nil, errUnimplemented
+}
