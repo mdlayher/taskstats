@@ -89,9 +89,7 @@ func (c *client) getStats(id int, cmdAttr, typeAggr uint16) (*Stats, error) {
 		Data: attrb,
 	}
 
-	flags := netlink.HeaderFlagsRequest
-
-	msgs, err := c.c.Execute(msg, c.family.ID, flags)
+	msgs, err := c.c.Execute(msg, c.family.ID, netlink.Request)
 	if err != nil {
 		return nil, err
 	}
@@ -129,9 +127,7 @@ func (c *client) CGroupStats(path string) (*CGroupStats, error) {
 		Data: attrb,
 	}
 
-	flags := netlink.HeaderFlagsRequest
-
-	msgs, err := c.c.Execute(msg, c.family.ID, flags)
+	msgs, err := c.c.Execute(msg, c.family.ID, netlink.Request)
 	if err != nil {
 		return nil, err
 	}

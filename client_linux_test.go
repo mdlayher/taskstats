@@ -159,7 +159,7 @@ func TestLinuxClientCGroupStatsOK(t *testing.T) {
 	c := testClient(t, genltest.CheckRequest(
 		familyID,
 		unix.CGROUPSTATS_CMD_GET,
-		netlink.HeaderFlagsRequest,
+		netlink.Request,
 		fn,
 	))
 	defer c.Close()
@@ -393,7 +393,7 @@ func TestLinuxClientPIDOK(t *testing.T) {
 	c := testClient(t, genltest.CheckRequest(
 		familyID,
 		unix.TASKSTATS_CMD_GET,
-		netlink.HeaderFlagsRequest,
+		netlink.Request,
 		fn,
 	))
 	defer c.Close()
@@ -469,7 +469,7 @@ func TestLinuxClientTGIDOK(t *testing.T) {
 	c := testClient(t, genltest.CheckRequest(
 		familyID,
 		unix.TASKSTATS_CMD_GET,
-		netlink.HeaderFlagsRequest,
+		netlink.Request,
 		fn,
 	))
 	defer c.Close()
