@@ -73,32 +73,17 @@ func (c *client) TGID(tgid int) (*Stats, error) {
 
 func (c *client) getStats(id int, cmdAttr, typeAggr uint16) (*Stats, error) {
 	// Query taskstats for information using a specific ID.
-	attrb, err := netlink.MarshalAttributes([]netlink.Attribute{{
+	attrs := []netlink.Attribute{{
 		Type: cmdAttr,
 		Data: nlenc.Uint32Bytes(uint32(id)),
-	}})
+	}}
+
+	msg, err := c.execute(unix.TASKSTATS_CMD_GET, attrs)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := genetlink.Message{
-		Header: genetlink.Header{
-			Command: unix.TASKSTATS_CMD_GET,
-			Version: unix.TASKSTATS_VERSION,
-		},
-		Data: attrb,
-	}
-
-	msgs, err := c.c.Execute(msg, c.family.ID, netlink.Request)
-	if err != nil {
-		return nil, err
-	}
-
-	if l := len(msgs); l != 1 {
-		return nil, fmt.Errorf("unexpected number of taskstats messages: %d", l)
-	}
-
-	return parseMessage(msgs[0], typeAggr)
+	return parseMessage(*msg, typeAggr)
 }
 
 // CGroupStats implements osClient.
@@ -111,32 +96,52 @@ func (c *client) CGroupStats(path string) (*CGroupStats, error) {
 	defer f.Close()
 
 	// Query taskstats for cgroup information using the file descriptor.
-	attrb, err := netlink.MarshalAttributes([]netlink.Attribute{{
+	attrs := []netlink.Attribute{{
 		Type: unix.CGROUPSTATS_CMD_ATTR_FD,
 		Data: nlenc.Uint32Bytes(uint32(f.Fd())),
-	}})
+	}}
+
+	msg, err := c.execute(unix.CGROUPSTATS_CMD_GET, attrs)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseCGroupMessage(*msg)
+}
+
+// execute executes a single generic netlink command and returns its response.
+func (c *client) execute(cmd uint8, attrs []netlink.Attribute) (*genetlink.Message, error) {
+	b, err := netlink.MarshalAttributes(attrs)
 	if err != nil {
 		return nil, err
 	}
 
 	msg := genetlink.Message{
 		Header: genetlink.Header{
-			Command: unix.CGROUPSTATS_CMD_GET,
+			Command: cmd,
 			Version: unix.TASKSTATS_VERSION,
 		},
-		Data: attrb,
+		Data: b,
 	}
 
 	msgs, err := c.c.Execute(msg, c.family.ID, netlink.Request)
 	if err != nil {
-		return nil, err
+		// We don't want to expose netlink errors directly to callers, so unpack
+		// the error for use with os.IsPermission and similar.
+		oerr, ok := err.(*netlink.OpError)
+		if !ok {
+			// Expect all errors to conform to netlink.OpError.
+			return nil, fmt.Errorf("taskstats: netlink operation returned non-netlink error (please file a bug: https://github.com/mdlayher/taskstats): %v", err)
+		}
+
+		return nil, oerr.Err
 	}
 
 	if l := len(msgs); l != 1 {
-		return nil, fmt.Errorf("unexpected number of cgroupstats messages: %d", l)
+		return nil, fmt.Errorf("taskstats: unexpected number of response messages: %d", l)
 	}
 
-	return parseCGroupMessage(msgs[0])
+	return &msgs[0], nil
 }
 
 // parseCGroupMessage attempts to parse a CGroupStats structure from a generic netlink message.
