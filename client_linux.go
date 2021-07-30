@@ -19,7 +19,7 @@ const (
 	sizeofTaskstatsV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
 	// sizeofTaskstatsV9 is the size of a unix.Taskstats structure as of
 	// taskstats version 9.
-	sizeofTaskstatsV9 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_delay_total))
+	sizeofTaskstatsV9 = int(unsafe.Offsetof(unix.Taskstats{}.Ac_btime64))
 	// sizeofTaskstatsV10 is the size of a unix.Taskstats structure as of
 	// taskstats version 10.
 	sizeOfTaskstatsV10 = int(unsafe.Sizeof(unix.Taskstats{}))
