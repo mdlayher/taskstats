@@ -1,10 +1,18 @@
 module github.com/mdlayher/taskstats
 
-go 1.12
+go 1.18
 
 require (
-	github.com/google/go-cmp v0.2.0
-	github.com/mdlayher/genetlink v0.0.0-20190313224034-60417448a851
-	github.com/mdlayher/netlink v0.0.0-20190313131330-258ea9dff42c
-	golang.org/x/sys v0.0.0-20210426230700-d19ff857e887
+	github.com/google/go-cmp v0.5.7
+	github.com/mdlayher/genetlink v1.2.0
+	github.com/mdlayher/netlink v1.6.0
+	golang.org/x/sys v0.0.0-20220405210540-1e041c57c461
+)
+
+require (
+	github.com/josharian/native v1.0.0 // indirect
+	github.com/mdlayher/socket v0.2.3 // indirect
+	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )

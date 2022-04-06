@@ -1,4 +1,5 @@
-//+build linux
+//go:build linux
+// +build linux
 
 package taskstats
 
@@ -377,7 +378,7 @@ func TestLinuxClientPIDOK(t *testing.T) {
 
 	fn := func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
 		// Cast unix.Taskstats structure into a byte array with the correct size.
-		b := *(*[sizeofTaskstatsV8]byte)(unsafe.Pointer(&stats))
+		b := *(*[sizeofV8]byte)(unsafe.Pointer(&stats))
 
 		return []genetlink.Message{{
 			Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
@@ -453,7 +454,7 @@ func TestLinuxClientTGIDOK(t *testing.T) {
 
 	fn := func(_ genetlink.Message, _ netlink.Message) ([]genetlink.Message, error) {
 		// Cast unix.Taskstats structure into a byte array with the correct size.
-		b := *(*[sizeofTaskstatsV8]byte)(unsafe.Pointer(&stats))
+		b := *(*[sizeofV8]byte)(unsafe.Pointer(&stats))
 
 		return []genetlink.Message{{
 			Data: nltest.MustMarshalAttributes([]netlink.Attribute{{

@@ -1,4 +1,5 @@
-//+build linux
+//go:build linux
+// +build linux
 
 package taskstats
 
@@ -13,16 +14,14 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// Fixed structure sizes.
 const (
-	// sizeofTaskstatsV8 is the size of a unix.Taskstats structure as of
-	// taskstats version 8.
-	sizeofTaskstatsV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
-	// sizeofTaskstatsV9 is the size of a unix.Taskstats structure as of
-	// taskstats version 9.
-	sizeofTaskstatsV9 = int(unsafe.Offsetof(unix.Taskstats{}.Ac_btime64))
-	// sizeofTaskstatsV10 is the size of a unix.Taskstats structure as of
-	// taskstats version 10.
-	sizeOfTaskstatsV10 = int(unsafe.Sizeof(unix.Taskstats{}))
+	sizeofV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
+	sizeofV9 = int(unsafe.Offsetof(unix.Taskstats{}.Ac_btime64))
+	// Current version.
+	sizeofV10 = int(unsafe.Sizeof(unix.Taskstats{}))
+
+	// TODO(mdlayher): sizeofV11 for Linux 5.17.
 
 	sizeofCGroupStats = int(unsafe.Sizeof(unix.CGroupStats{}))
 )
@@ -42,6 +41,9 @@ func newClient() (*client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Best effort.
+	_ = c.SetOption(netlink.ExtendedAcknowledge, true)
 
 	return initClient(c)
 }
@@ -203,8 +205,11 @@ func parseMessage(m genetlink.Message, typeAggr uint16) (*Stats, error) {
 			// Verify that the byte slice containing a unix.Taskstats is the
 			// size expected by this package, so we don't blindly cast the
 			// byte slice into a structure of the wrong size.
-			if wantV8, wantV9, wantV10, got := sizeofTaskstatsV8, sizeofTaskstatsV9, sizeOfTaskstatsV10, len(na.Data); wantV8 != got && wantV9 != got && wantV10 != got {
-				return nil, fmt.Errorf("unexpected taskstats structure size, want %d (v8) or %d (v9) or %d (v10), got %d", wantV8, wantV9, wantV10, got)
+			switch l := len(na.Data); l {
+			case sizeofV8, sizeofV9, sizeofV10:
+				// OK, supported.
+			default:
+				return nil, fmt.Errorf("unexpected taskstats structure size: %d: does not match taskstats v8, v9, v10", l)
 			}
 
 			return parseStats(*(*unix.Taskstats)(unsafe.Pointer(&na.Data[0])))
