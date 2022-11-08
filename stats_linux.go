@@ -38,6 +38,9 @@ func parseStats(ts unix.Taskstats) (*Stats, error) {
 		SwapInDelay:         nanoseconds(ts.Swapin_delay_total),
 		FreePagesDelayCount: ts.Freepages_count,
 		FreePagesDelay:      nanoseconds(ts.Freepages_delay_total),
+		ReadBytes:           ts.Read_bytes,
+		WriteBytes:          ts.Write_bytes,
+		CancelledWriteBytes: ts.Cancelled_write_bytes,
 	}
 
 	return stats, nil
