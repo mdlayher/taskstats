@@ -19,9 +19,10 @@ const (
 	sizeofV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
 	sizeofV9 = int(unsafe.Offsetof(unix.Taskstats{}.Ac_btime64))
 	// Current version.
-	sizeofV10 = int(unsafe.Sizeof(unix.Taskstats{}))
-
-	// TODO(mdlayher): sizeofV11 for Linux 5.17.
+	sizeofV10 = int(unsafe.Offsetof(unix.Taskstats{}.Ac_btime64) + unsafe.Sizeof(unix.Taskstats{}.Ac_btime64))
+	sizeofV11 = int(unsafe.Offsetof(unix.Taskstats{}.Compact_delay_total) + unsafe.Sizeof(unix.Taskstats{}.Compact_delay_total))
+	sizeofV12 = int(unsafe.Offsetof(unix.Taskstats{}.Ac_exe_inode) + unsafe.Sizeof(unix.Taskstats{}.Ac_exe_inode))
+	sizeofV13 = int(unsafe.Offsetof(unix.Taskstats{}.Wpcopy_delay_total) + unsafe.Sizeof(unix.Taskstats{}.Wpcopy_delay_total))
 
 	sizeofCGroupStats = int(unsafe.Sizeof(unix.CGroupStats{}))
 )
@@ -206,10 +207,10 @@ func parseMessage(m genetlink.Message, typeAggr uint16) (*Stats, error) {
 			// size expected by this package, so we don't blindly cast the
 			// byte slice into a structure of the wrong size.
 			switch l := len(na.Data); l {
-			case sizeofV8, sizeofV9, sizeofV10:
+			case sizeofV8, sizeofV9, sizeofV10, sizeofV11, sizeofV12, sizeofV13:
 				// OK, supported.
 			default:
-				return nil, fmt.Errorf("unexpected taskstats structure size: %d: does not match taskstats v8, v9, v10", l)
+				return nil, fmt.Errorf("unexpected taskstats structure size: %d: does not match taskstats v8, v9, v10, v11, v12, v13", l)
 			}
 
 			return parseStats(*(*unix.Taskstats)(unsafe.Pointer(&na.Data[0])))
