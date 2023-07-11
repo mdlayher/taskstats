@@ -27,4 +27,6 @@ type Stats struct {
 	SwapInDelay         time.Duration
 	FreePagesDelayCount uint64
 	FreePagesDelay      time.Duration
+	ThrashingDelayCount uint64
+	ThrashingDelay      time.Duration
 }
