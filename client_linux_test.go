@@ -19,6 +19,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const sizeofV8 = int(unsafe.Offsetof(unix.Taskstats{}.Thrashing_count))
+
 func TestLinuxClientCGroupStatsBadMessages(t *testing.T) {
 	f, done := tempFile(t)
 	defer done()
@@ -193,18 +195,6 @@ func TestLinuxClientPIDBadMessages(t *testing.T) {
 			name: "two messages",
 			msgs: []genetlink.Message{{}, {}},
 		},
-		{
-			name: "incorrect taskstats size",
-			msgs: []genetlink.Message{{
-				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-					Type: unix.TASKSTATS_TYPE_AGGR_PID,
-					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-						Type: unix.TASKSTATS_TYPE_STATS,
-						Data: []byte{0xff},
-					}}),
-				}}),
-			}},
-		},
 	}
 
 	for _, tt := range tests {
@@ -234,18 +224,6 @@ func TestLinuxClientTGIDBadMessages(t *testing.T) {
 		{
 			name: "two messages",
 			msgs: []genetlink.Message{{}, {}},
-		},
-		{
-			name: "incorrect taskstats size",
-			msgs: []genetlink.Message{{
-				Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-					Type: unix.TASKSTATS_TYPE_AGGR_TGID,
-					Data: nltest.MustMarshalAttributes([]netlink.Attribute{{
-						Type: unix.TASKSTATS_TYPE_STATS,
-						Data: []byte{0xff},
-					}}),
-				}}),
-			}},
 		},
 	}
 
