@@ -1,4 +1,5 @@
-//+build !linux
+//go:build !linux
+// +build !linux
 
 package taskstats
 
@@ -7,12 +8,10 @@ import (
 	"runtime"
 )
 
-var (
-	// errUnimplemented is returned by all functions on platforms that
-	// cannot make use of taskstats.
-	errUnimplemented = fmt.Errorf("taskstats not implemented on %s/%s",
-		runtime.GOOS, runtime.GOARCH)
-)
+// errUnimplemented is returned by all functions on platforms that
+// cannot make use of taskstats.
+var errUnimplemented = fmt.Errorf("taskstats not implemented on %s/%s",
+	runtime.GOOS, runtime.GOARCH)
 
 var _ osClient = &client{}
 
