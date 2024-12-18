@@ -4,7 +4,6 @@
 package taskstats
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -504,7 +503,7 @@ func testClient(t *testing.T, fn genltest.Func) *client {
 }
 
 func tempFile(t *testing.T) (string, func()) {
-	f, err := ioutil.TempFile(os.TempDir(), "taskstats-test")
+	f, err := os.CreateTemp("", "taskstats-test")
 	if err != nil {
 		t.Fatalf("failed to create temporary file: %v", err)
 	}
